@@ -16,7 +16,7 @@ import scala.util.Try
 class FileReadChainService extends FileChainService {
 
   def readChain(networkId: NetworkId, path: String): Task[Chain] =
-    ZIO.ifM(chainDoesExist(networkId))(
+    ZIO.ifM(chainDoesExist(path)(networkId))(
       readChain(Chain(networkId))(fileTask.compose(fnChainPath(path))(networkId)),
       Task.fail(ChainNotFoundThrowable)
     )

@@ -2,20 +2,24 @@ package core.persistence.services
 
 import java.io.File
 
+import cats.implicits._
 import core.NetworkId
 import zio.Task
 
 trait FileChainService {
 
-  private val chainPathSkeleton: NetworkId => String = networkId => s"%s/$networkId"
+  private type Path = String
 
-  val blockPath: NetworkId => String => String = networkId => blockId =>
-    s"${chainPathSkeleton(networkId)}/$blockId.json"
+  private val chainPathSkeleton: NetworkId => String = networkId => s"%s/${networkId.show}"
 
-  val fileTask: String => Task[File] = path => Task(new File(getClass.getResource(path).getPath))
+  val blockPath: Path => NetworkId => String => String = path => networkId => blockId =>
+    s"${chainPathSkeleton(networkId).format(path)}/$blockId.json"
 
-  val chainDoesExist: NetworkId => Task[Boolean] = id => fileTask(chainPathSkeleton(id)).map(_.exists())
+  val fileTask: Path => Task[File] = path => Task(new File(path))
 
-  val fnChainPath: String => NetworkId => String = path => chainPathSkeleton(_).format(path)
+  val chainDoesExist: Path => NetworkId => Task[Boolean] = path => networkId =>
+    fileTask(chainPathSkeleton(networkId).format(path)).map(_.exists())
+
+  val fnChainPath: Path => NetworkId => String = path => chainPathSkeleton(_).format(path)
 
 }
