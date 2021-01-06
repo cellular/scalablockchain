@@ -1,0 +1,12 @@
+# Routes
+# ~~~~~~
+
+GET   /v1/block/recents             org.tesseractblockchain.controllers.BlockController.getRecentBlocks(blockSize: core.BlockSize, offset: Option[core.Offset])
+GET   /v1/block/:hex                org.tesseractblockchain.controllers.BlockController.getBlockByHash(hex: String)
+GET   /v1/block/child/:hex          org.tesseractblockchain.controllers.BlockController.getChildBlockOfHash(hex: String)
+
+GET   /v1/dispatch/:hex             org.tesseractblockchain.controllers.DispatcherController.searchForHash(hex: String)
+
+GET   /v1/transaction/recents       org.tesseractblockchain.controllers.TransactionController.getRecentTransactions(blockSize: core.BlockSize, offset: core.Offset)
+GET   /v1/transaction/:hex          org.tesseractblockchain.controllers.TransactionController.getTransactionByHash(hex: String)
+POST  /v1/transaction               org.tesseractblockchain.controllers.TransactionController.sendTransaction

@@ -1,0 +1,3 @@
+package core.exceptions
+
+final class NonceArithmeticException extends ArithmeticException
