@@ -1,17 +1,17 @@
 package core.interops.persistence.services
 
-import java.io.File
+import java.nio.file.Paths
 import java.time.Instant
 
 import core.persistence.services.FileWriteChainService
 import core.{Block, Chain, GenesisBlock, NetworkId}
+import play.api.Play
 import tests.TestSpec
-import zio.Task
 
 class FileWriteChainServiceSpec extends TestSpec {
 
   private val millis = Instant.now.toEpochMilli
-  private val path = "/core/persistence/chain/"
+  private val path = Paths.get(getClass.getResource("/core/persistence/chain/1").getPath)
 
   "FileWriteChainService#readChain" must {
     "" in {
@@ -28,7 +28,7 @@ class FileWriteChainServiceSpec extends TestSpec {
 
       val program = for {
         chain <- blocks.map(Chain(NetworkId(1), _))
-        _     <- service.writeChain(chain, path)
+        _     <- service.writeChain(chain = chain, path = path.toAbsolutePath.toString)
       } yield ()
 
       whenReady(program)(_ mustBe Right(()))

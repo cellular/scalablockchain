@@ -1,6 +1,8 @@
 package core.persistence.services
 
 import java.io.{File, PrintWriter}
+import java.nio.charset.Charset
+import java.nio.file.{Files, Paths}
 
 import cats.implicits._
 import core.persistence.errors.FileWritingBlockThrowable
@@ -34,7 +36,8 @@ class FileWriteChainService extends FileChainService {
   private def writeBlock(block: Block): Task[File] => Task[Unit] = _.flatMap { file =>
     (for {
       json   <- Task(Json.toJson(block)).map(Json.stringify)
-      writer <- Task(new PrintWriter(file))
+      path   <- Task(Paths.get(file.getPath))
+      writer <- Task(Files.newBufferedWriter(path))
       _      <- Task.fromTry(Try(writer.write(json))) *> Task(writer.close())
     } yield ()).mapError(FileWritingBlockThrowable)
   }
