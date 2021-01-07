@@ -6,7 +6,7 @@ import cats.implicits._
 import core.NetworkId
 import zio.Task
 
-trait FileChainService extends {
+private[core] trait FileChainService extends {
 
   private type Path = String
 

@@ -13,7 +13,7 @@ import zio.{Task, ZIO}
 import scala.io.Source
 import scala.util.Try
 
-class FileReadChainService extends FileChainService {
+private[core] class FileReadChainService extends FileChainService {
 
   def readChain(networkId: NetworkId, path: String): Task[Chain] =
     ZIO.ifM(chainDoesExist(path)(networkId))(

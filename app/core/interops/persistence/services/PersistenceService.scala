@@ -3,17 +3,15 @@ package core.interops.persistence.services
 import core.persistence.services.{FileReadChainService, FileWriteChainService}
 import core.{Chain, NetworkId}
 import javax.inject.Inject
-import play.api.Configuration
 import zio.Task
 import zio.interop.catz._
 
 class PersistenceService @Inject()(
     fileReadChainService: FileReadChainService,
-    fileWriteChainService: FileWriteChainService,
-    configuration: Configuration
+    fileWriteChainService: FileWriteChainService
 ) {
 
-  private val baseRoot = configuration.get[String]("core.persistence.basePath")
+  private val baseRoot = s"${System.getProperty("user.home")}/tesseractblockchain/resources/chain"
 
   def writeChain(chain: Chain): Task[Unit] = fileWriteChainService.writeChain(chain, baseRoot)
 

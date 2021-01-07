@@ -13,7 +13,7 @@ import zio.{Task, ZIO}
 
 import scala.util.Try
 
-class FileWriteChainService extends FileChainService {
+private[core] class FileWriteChainService extends FileChainService {
 
   def writeChain(chain: Chain, path: String): Task[Unit] =
     for {
