@@ -18,10 +18,8 @@ class FileReadChainServiceSpec extends TestSpec {
       )
 
       whenReady(program) {
-        case Right(chain) =>
-          println(chain)
-          chain mustBe a[Chain]
-        case Left(_)      => fail("")
+        case Right(chain) => chain mustBe a[Chain]
+        case Left(_)      => fail("unexpected error: readChain")
       }
     }
   }
