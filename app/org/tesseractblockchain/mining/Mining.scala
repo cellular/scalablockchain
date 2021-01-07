@@ -1,15 +1,14 @@
 package org.tesseractblockchain.mining
 
-import java.time.Clock
 import cats.effect._
 import core.{Block, Miner}
-import org.tesseractblockchain.DependencyManager
+import org.tesseractblockchain.BlockchainEnvironment
 import zio.interop.catz.{core, monadErrorInstance, _}
 import zio.{Fiber, _}
 
 private[tesseractblockchain] object Mining {
 
-  def mining: ZIO[Clock with DependencyManager, Throwable, Fiber.Runtime[Throwable, Ref[Miner]]] =
+  def mining: ZIO[BlockchainEnvironment, Throwable, Fiber.Runtime[Throwable, Ref[Miner]]] =
     for {
       block <- Mining.getNewBlockForMining
       miner <- Ref.make(Miner(block, isMining = true, canceledBlock = false))
@@ -20,8 +19,8 @@ private[tesseractblockchain] object Mining {
 
   // private val miners: UIO[Ref[List[Miner]]] = Ref.make(Nil)
 
-  def mining(minerRef: Ref[Miner]): ZIO[Clock with DependencyManager, Throwable, Ref[Miner]] =
-    ZIO.accessM[Clock with DependencyManager] { env =>
+  def mining(minerRef: Ref[Miner]): ZIO[BlockchainEnvironment, Throwable, Ref[Miner]] =
+    ZIO.accessM[BlockchainEnvironment] { env =>
       minerRef.get.flatMap { miner =>
         for {
           updatedMinerRef        <- incrementNonceOrElseRestartMining(miner.block, minerRef, miner.canceledBlock)
@@ -29,10 +28,11 @@ private[tesseractblockchain] object Mining {
           prevBlockHash          <- miner.block.getBlockHash
           maybeMinedBlock        <- ZIO.ifM(canceledBlockPredicate)(
                                       blockMined(miner.block),
-                                      Task.succeed(Block.apply(prevBlockHash, env.millis()))
+                                      Task.succeed(Block.apply(prevBlockHash, env.clockEnv.millis()))
                                     )
           maybeCanceledBlock     <- ZIO.ifM(canceledBlockPredicate)(Task.succeed(true), Task.succeed(false))
           _                      <- updatedMinerRef.update(_.copy(maybeMinedBlock, miner.isMining, maybeCanceledBlock))
+          //
           _                      <- ZIO.when(miner.isMining)(createNewBlock(updatedMinerRef).flatMap(mining))
         } yield updatedMinerRef
       }
@@ -42,15 +42,15 @@ private[tesseractblockchain] object Mining {
     block: Block,
     minerRef: Ref[Miner],
     canceledBlock: Boolean
-  ): ZIO[Clock with DependencyManager, Throwable, Ref[Miner]] =
-    ZIO.accessM[Clock with DependencyManager] { env =>
+  ): ZIO[BlockchainEnvironment, Throwable, Ref[Miner]] =
+    ZIO.accessM[BlockchainEnvironment] { env =>
       minerRef.get.flatMap { miner =>
-        val fnRestartMining: Miner => ZIO[Clock with DependencyManager, Nothing, Unit] =
+        val fnRestartMining: Miner => ZIO[BlockchainEnvironment, Nothing, Unit] =
           Mining.restartMining(_).>>=(block => minerRef.update(m => Miner(block, m.isMining, m.canceledBlock)))
 
         for {
           hash                     <- block.getBlockHash
-          blockchainRef            <- env.blockchain
+          blockchainRef            <- env.dependencyEnv.blockchain
           blockchain               <- blockchainRef.get
           doesNotFulfillDifficulty <- ZIO.succeed(blockchain.fulfillsDifficulty(hash))
           _                        <- ZIO.when(!canceledBlock && doesNotFulfillDifficulty)(
@@ -60,45 +60,45 @@ private[tesseractblockchain] object Mining {
       }
     }
 
-  def restartMining(miner: Miner): ZIO[Clock with DependencyManager, Nothing, Block] =
-    ZIO.accessM[Clock with DependencyManager] { env =>
+  def restartMining(miner: Miner): ZIO[BlockchainEnvironment, Nothing, Block] =
+    ZIO.accessM[BlockchainEnvironment] { env =>
       (for {
-        pendingTransactionsRef <- env.pendingTransactions
+        pendingTransactionsRef <- env.dependencyEnv.pendingTransactions
         pendingTransactions    <- pendingTransactionsRef.get
         nextBlockTxs           <- pendingTransactions.getTransactionsForNextBlock.commit
       } yield nextBlockTxs).map { transactions =>
-        Block(miner.block.previousHash, transactions, env.millis())
+        Block(miner.block.previousHash, transactions, env.clockEnv.millis())
       }
     }
 
-  def createNewBlock(minerRef: Ref[Miner]): ZIO[Clock with DependencyManager, Throwable, Ref[Miner]] =
+  def createNewBlock(minerRef: Ref[Miner]): ZIO[BlockchainEnvironment, Throwable, Ref[Miner]] =
     Mining
       .getNewBlockForMining
       .map(block => minerRef.update(_.copy(block = block)))
       .map(_ => minerRef)
 
-  def getNewBlockForMining: ZIO[Clock with DependencyManager, Throwable, Block] =
-    ZIO.accessM[Clock with DependencyManager] { env =>
+  def getNewBlockForMining: ZIO[BlockchainEnvironment, Throwable, Block] =
+    ZIO.accessM[BlockchainEnvironment] { env =>
       for {
-        blockchainRef          <- env.blockchain
+        blockchainRef          <- env.dependencyEnv.blockchain
         blockchain             <- blockchainRef.get
         prevHash               <- blockchain.getPreviousHash
-        pendingTransactionsRef <- env.pendingTransactions
+        pendingTransactionsRef <- env.dependencyEnv.pendingTransactions
         pendingTransactions    <- pendingTransactionsRef.get
         transactions           <- pendingTransactions.getTransactionsForNextBlock.commit
-      } yield Block(previousHash = prevHash, transactions = transactions, env.millis())
+      } yield Block(previousHash = prevHash, transactions = transactions, env.clockEnv.millis())
     }
 
-  def blockMined(block: Block): ZIO[Clock with DependencyManager, Throwable, Block] =
-    ZIO.accessM[Clock with DependencyManager] { env =>
+  def blockMined(block: Block): ZIO[BlockchainEnvironment, Throwable, Block] =
+    ZIO.accessM[BlockchainEnvironment] { env =>
       for {
         transactions           <- block.getBlockHash.map(hash => block.transactions.map(_.apply(hash)))
         updatedBlock            = block.copy(transactions = transactions)
-        blockchainRef          <- env.blockchain
+        blockchainRef          <- env.dependencyEnv.blockchain
         blockchain             <- blockchainRef.get
         updatedBlockchain      <- blockchain.addBlock(updatedBlock)
         _                      <- blockchainRef.set(updatedBlockchain)
-        pendingTransactionsRef <- env.pendingTransactions
+        pendingTransactionsRef <- env.dependencyEnv.pendingTransactions
         pendingTransactions    <- pendingTransactionsRef.get
         _                      <- pendingTransactions.clearPendingTransactions(updatedBlock).commit
         // _ <- notifyNewBlock(block) // TODO optional

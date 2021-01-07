@@ -2,11 +2,8 @@ package core.interops.persistence.services
 
 import java.time.Instant
 
-import cats.implicits._
-import core.util.catz.ZioComonad._
 import core.persistence.services.{FileReadChainService, FileWriteChainService}
 import core.{Block, Chain, GenesisBlock, NetworkId}
-import play.api.Configuration
 import tests.TestSpec
 import zio.Task
 import zio.interop.catz._

@@ -1,7 +1,6 @@
 package org.tesseractblockchain
 
 import cats.effect._
-import java.time.Clock
 import core.{BlockCache, Miner, TransactionCache}
 import org.tesseractblockchain.logic.{Blockchain, PendingTransactions}
 import org.tesseractblockchain.mining.Mining
@@ -14,7 +13,7 @@ private[tesseractblockchain] trait DependencyManager {
   val miner0: UIO[Ref[Option[Miner]]] = Ref.make(None)
 
   def runMining(miner0: UIO[Ref[Option[Miner]]] = miner0):
-  ZIO[Clock with DependencyManager, Throwable, Fiber.Runtime[Throwable, Ref[Miner]]] = {
+  ZIO[BlockchainEnvironment, Throwable, Fiber.Runtime[Throwable, Ref[Miner]]] = {
     (for {
       fiber     <- Mining.mining
       minerRef  <- fiber.join
