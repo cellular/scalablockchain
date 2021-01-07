@@ -1,7 +1,6 @@
 package core.persistence.services
 
-import java.io.{File, PrintWriter}
-import java.nio.charset.Charset
+import java.io.File
 import java.nio.file.{Files, Paths}
 
 import cats.implicits._

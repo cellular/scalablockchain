@@ -5,16 +5,15 @@ import java.time.Instant
 
 import core.persistence.services.FileWriteChainService
 import core.{Block, Chain, GenesisBlock, NetworkId}
-import play.api.Play
 import tests.TestSpec
 
 class FileWriteChainServiceSpec extends TestSpec {
 
   private val millis = Instant.now.toEpochMilli
-  private val path = Paths.get(getClass.getResource("/core/persistence/chain/1").getPath)
 
-  "FileWriteChainService#readChain" must {
-    "" in {
+  "FileWriteChainService#writeChain" must {
+    "write new blocks as json into specified path" in {
+      val path = s"${System.getProperty("user.dir")}/test/resources/core/persistence/chain"
       val blocks = for {
         block0Hash <- GenesisBlock.genesisBlock.getBlockHash
         block1      = Block.apply(block0Hash, millis)
@@ -28,7 +27,7 @@ class FileWriteChainServiceSpec extends TestSpec {
 
       val program = for {
         chain <- blocks.map(Chain(NetworkId(1), _))
-        _     <- service.writeChain(chain = chain, path = path.toAbsolutePath.toString)
+        _     <- service.writeChain(chain = chain, path = Paths.get(path).toString)
       } yield ()
 
       whenReady(program)(_ mustBe Right(()))

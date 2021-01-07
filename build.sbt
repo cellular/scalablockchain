@@ -58,7 +58,7 @@ scapegoatIgnoredFiles := Seq(".*routes.main..*Routes.scala")
 scapegoatVersion in ThisBuild := "1.4.4"
 scapegoatDisabledInspections := Seq("VariableShadowing")
 
-coverageEnabled in Test := true
+//coverageEnabled in Test := true
 coverageFailOnMinimum := true
 coverageHighlighting := true
 coverageMinimum := 100
