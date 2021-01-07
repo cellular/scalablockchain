@@ -18,19 +18,19 @@ class FileWriteChainService extends FileChainService {
 
   def writeChain(chain: Chain, path: String): Task[Unit] =
     for {
-      networkId           <- Task.succeed(chain.networkId)
-      _                   <- ZIO.unlessM(chainDoesExist(path)(networkId))(
-                               fileTask.compose(fnChainPath(path))(networkId).map(_.mkdir)
-                             )
-      hashBlockTuple      <- chain.blocks.traverse { block =>
-                               block.getBlockHash.flatMap(SHA3Helper.digestToHex(_).map(_ -> block))
-                             }
-      fnBlockPathFileTask  = fileTask.compose(blockPath(path)(networkId))(_)
-      _                   <- hashBlockTuple.traverse { case (id, block) =>
-                               ZIO.unlessM(fnBlockPathFileTask(id).map(_.exists()))(
-                                 writeBlock(block)(fnBlockPathFileTask(id))
-                               )
-                             }
+      networkId      <- Task.succeed(chain.networkId)
+      _              <- ZIO.unlessM(chainDoesExist(path)(networkId))(
+                          fileTask.compose(fnChainPath(path))(networkId).map(_.mkdir)
+                        )
+      hashBlockTuple <- chain.blocks.traverse { block =>
+                          block.getBlockHash.flatMap(SHA3Helper.digestToHex(_).map(_ -> block))
+                        }
+      _              <- hashBlockTuple.traverse { case (id, block) =>
+                          val fnBlockPathFileTask = fileTask.compose(blockPath(path)(networkId))(_)
+                          ZIO.unlessM(fnBlockPathFileTask(id).map(_.exists()))(
+                            writeBlock(block)(fnBlockPathFileTask(id))
+                          )
+                        }
     } yield ()
 
   private def writeBlock(block: Block): Task[File] => Task[Unit] = _.flatMap { file =>
