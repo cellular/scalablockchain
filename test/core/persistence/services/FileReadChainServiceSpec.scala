@@ -1,8 +1,7 @@
-package core.interops.persistence.services
+package core.persistence.services
 
 import java.nio.file.Paths
 
-import core.persistence.services.FileReadChainService
 import core.{Chain, NetworkId}
 import tests.TestSpec
 

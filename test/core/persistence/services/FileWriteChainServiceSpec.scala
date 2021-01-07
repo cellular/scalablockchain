@@ -1,9 +1,8 @@
-package core.interops.persistence.services
+package core.persistence.services
 
 import java.nio.file.Paths
 import java.time.Instant
 
-import core.persistence.services.FileWriteChainService
 import core.{Block, Chain, GenesisBlock, NetworkId}
 import tests.TestSpec
 
