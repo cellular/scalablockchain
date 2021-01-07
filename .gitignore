@@ -8,4 +8,4 @@ target
 /RUNNING_PID
 ./conf
 .bsp
-#test/resources/core/persistence/chain/*
+test/resources/core/persistence/chain/*
