@@ -65,26 +65,26 @@ private[tesseractblockchain] object Blockchain {
     /**
      * first block is always the genesis block
      */
-    def getLatestBlocks(size: BlockSize, offset: Offset): Task[List[Block]] =
+    def getLatestBlocks(size: BlockSize, offset: Offset): Task[List[Block]] = {
+      def getLatestBlocks(blocks: List[Block], sizePlusOffset: Int): Task[List[Block]] =
+        MonadExtension.foldOptionM[Task, List[Block]](
+          fa = getBlockByHash(blocks.head.blockHeader.previousHash)
+            .either
+            .map(_.fold(_ => none[Block], _.some))
+            .flatMap(_.traverse(block =>
+              ZIO.ifM(Task.succeed(sizePlusOffset >= offset.value))(
+                Task.succeed(block :: blocks),
+                Task.succeed(blocks)
+              ))),
+          fb = Task.succeed(blocks)
+        )
+
       Task(getLatestBlock).flatMap { block =>
-        (0 until (size.value + offset.value)).foldLeft(Task(List(block))) { (blocksTask, i) =>
-          blocksTask.flatMap { blocks =>
-            MonadExtension.foldOptionM(
-              fa = for {
-                prevBlock <- getBlockByHash(blocks.head.blockHeader.previousHash).either.map {
-                  case Right(block) => block.some
-                  case Left(_)      => none[Block]
-                }
-                blockPair <- prevBlock.traverse { block =>
-                  if (i >= offset.value) Task.succeed(block :: blocks)
-                  else Task.succeed(blocks)
-                }
-              } yield blockPair,
-              fb = Task.succeed(blocks)
-            )
-          }
+        (0 until (size.value + offset.value)).foldLeft(Task(List(block))) {
+          (blocksTask, sizePlusOffset) => blocksTask.flatMap(getLatestBlocks(_, sizePlusOffset))
         }
       }
+    }
   }
 
 }

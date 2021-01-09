@@ -182,7 +182,7 @@ class TransactionSpec extends TestSpec {
 
       Array(tx1, tx2).sorted(Transaction.ordering).toList match {
         case Nil => fail()
-        case h :: _ => h mustBe tx2
+        case ::(h, _) => h mustBe tx2
       }
     }
   }
