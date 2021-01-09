@@ -4,7 +4,7 @@ import java.io.File
 
 import cats.implicits._
 import core.persistence.errors.{FileReadingBlockThrowable, ChainNotFoundThrowable}
-import core.util.catz.MonadExtension
+import core.util.catz.ControlMonad
 import core.{Block, Chain, NetworkId}
 import play.api.libs.json.Json
 import zio.interop.catz._
@@ -28,11 +28,11 @@ private[core] class FileReadChainService extends FileChainService {
     } yield chain.copy(blocks = blocks.flatMap(chain.addBlock))
 
   private def readBlock(file: File): Task[Block] =
-    MonadExtension.foldOptionM[Task, Block](for {
+    ControlMonad.foldOptionM[Task, Block](Task.fail(FileReadingBlockThrowable(file)), for {
       source   <- Task(Source.fromFile(file))
       lines    <- Task.fromTry(Try(source.getLines))
       asString <- Task.succeed(lines.mkString)
       block    <- Task(source.close()) *> Task(Json.parse(asString).asOpt[Block])
-    } yield block, Task.fail(FileReadingBlockThrowable(file)))
+    } yield block)
 
 }

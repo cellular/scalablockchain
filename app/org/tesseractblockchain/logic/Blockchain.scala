@@ -2,7 +2,7 @@ package org.tesseractblockchain.logic
 
 import java.math.BigInteger
 
-import core.util.catz.MonadExtension
+import core.util.catz.ControlMonad
 import cats.Applicative
 import cats.effect._
 import cats.implicits._
@@ -56,9 +56,9 @@ private[tesseractblockchain] object Blockchain {
 
     def getChildOfBlock(block: Block): Task[Block] =
       Task.fromTry(Try(blockchain.chain.blocks.indexOf(block) + 1)).flatMap { index =>
-        MonadExtension.foldOptionM(
-          fa = Task.succeed(blockchain.chain.get(index)),
-          fb = Task.fail(BlockChildNotFoundException(block))
+        ControlMonad.foldOptionM(
+          onFailure = Task.fail(BlockChildNotFoundException(block)),
+          onSuccess = Task.succeed(blockchain.chain.get(index))
         )
       }
 
@@ -67,16 +67,16 @@ private[tesseractblockchain] object Blockchain {
      */
     def getLatestBlocks(size: BlockSize, offset: Offset): Task[List[Block]] = {
       def getLatestBlocks(blocks: List[Block], sizePlusOffset: Int): Task[List[Block]] =
-        MonadExtension.foldOptionM[Task, List[Block]](
-          fa = getBlockByHash(blocks.head.blockHeader.previousHash)
+        ControlMonad.foldOptionM[Task, List[Block]](
+          onFailure = Task.succeed(blocks),
+          onSuccess = getBlockByHash(blocks.head.blockHeader.previousHash)
             .either
             .map(_.fold(_ => none[Block], _.some))
             .flatMap(_.traverse(block =>
               ZIO.ifM(Task.succeed(sizePlusOffset >= offset.value))(
                 Task.succeed(block :: blocks),
                 Task.succeed(blocks)
-              ))),
-          fb = Task.succeed(blocks)
+              )))
         )
 
       Task(getLatestBlock).flatMap { block =>
