@@ -35,24 +35,19 @@ private[tesseractblockchain] object Blockchain {
 
     def addBlock(block: Block): Task[Blockchain] =
       Applicative[Task].map3(
-        f0 = (block.getBlockHash >>= SHA3Helper.digestToHex).map(hex =>
-               blockchain.blockCache.copy((hex, block) :: blockchain.blockCache.value)
-             ),
-        f1 = block.transactions.flatTraverse(tx => tx.txIdAsHex.map((_, tx) :: blockchain.transactionCache.value)),
-        f2 = Task.succeed(blockchain.chain.copy(blocks = block :: blockchain.chain.blocks))
-      )((blockCache, txCacheTuples, chain) => Blockchain(blockCache, TransactionCache(txCacheTuples), chain))
+        f0 = (block.getBlockHash >>= SHA3Helper.digestToHex).map(blockchain.blockCache.copyWith(_, block)),
+        f1 =
+          block.transactions
+            .flatTraverse(tx => tx.txIdAsHex.map((_, tx) :: blockchain.transactionCache.value))
+            .map(TransactionCache(_)),
+        f2 = Task.succeed(blockchain.chain.copyWith(block))
+      )(Blockchain.apply)
 
     def getPreviousHash: Task[Array[Byte]] = blockchain.chain.getLastBlock.getBlockHash
-
-    def size: Int = blockchain.chain.size
 
     def getTransactionByHash(hex: String): Task[Transaction] = blockchain.transactionCache.get(hex)
 
     def getBlockByHash(hex: String): Task[Block] = blockchain.blockCache.get(hex)
-
-    def getBlockByHash(hash: Array[Byte]): Task[Block] = SHA3Helper.digestToHex(hash) >>= blockchain.blockCache.get
-
-    def getLatestBlock: Block = blockchain.chain.getLastBlock
 
     def getChildOfBlock(block: Block): Task[Block] =
       Task.fromTry(Try(blockchain.chain.blocks.indexOf(block) + 1)).flatMap { index =>
@@ -62,16 +57,14 @@ private[tesseractblockchain] object Blockchain {
         )
       }
 
-    /**
-     * first block is always the genesis block
-     */
     def getLatestBlocks(size: BlockSize, offset: Offset): Task[List[Block]] = {
       def getLatestBlocks(blocks: List[Block], sizePlusOffset: Int): Task[List[Block]] =
         ControlMonad.foldOptionM[Task, List[Block]](
           onFailure = Task.succeed(blocks),
-          onSuccess = getBlockByHash(blocks.head.blockHeader.previousHash)
+          // first block is always the genesis block, "blocks.head" is always existing
+          onSuccess = (SHA3Helper.digestToHex(blocks.head.blockHeader.previousHash) >>= blockchain.blockCache.get)
             .either
-            .map(_.fold(_ => none[Block], _.some))
+            .map(_.toOption)
             .flatMap(_.traverse(block =>
               ZIO.ifM(Task.succeed(sizePlusOffset >= offset.value))(
                 Task.succeed(block :: blocks),
@@ -79,12 +72,13 @@ private[tesseractblockchain] object Blockchain {
               )))
         )
 
-      Task(getLatestBlock).flatMap { block =>
+      Task(blockchain.chain.getLastBlock).flatMap { block =>
         (0 until (size.value + offset.value)).foldLeft(Task(List(block))) {
           (blocksTask, sizePlusOffset) => blocksTask.flatMap(getLatestBlocks(_, sizePlusOffset))
         }
       }
     }
+
   }
 
 }

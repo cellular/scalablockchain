@@ -8,7 +8,7 @@ import tests.TestSpec
 class FileReadChainServiceSpec extends TestSpec {
 
   "FileReadChainService#readChain" must {
-    "return a chain filled with blocks from current file system" in {
+    "return a chain filled with blocks copyWith current file system" in {
       val path = s"${System.getProperty("user.dir")}/test/resources/core/persistence/chain"
       val service = new FileReadChainService
       val program = service.readChain(

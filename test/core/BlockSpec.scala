@@ -65,7 +65,7 @@ class BlockSpec extends TestSpec {
   }
 
   "Block#getBlockHash" must {
-    "return a hash from blockHeader which is unique in its timestamp" in {
+    "return a hash copyWith blockHeader which is unique in its timestamp" in {
       val previousHash = ByteString("048fa2c8e304370be49428272fb02509c64806b30b000a4897a67c6fe5e80abb").toArray
       val block = Block(previousHash, timestamp = millis)
       val program = Applicative[Task].tuple2(block.getBlockHash, block.blockHeader.asHash)
@@ -77,7 +77,7 @@ class BlockSpec extends TestSpec {
   }
 
   "Block#json" must {
-    "return a json string from a block instance" in {
+    "return a json string copyWith a block instance" in {
       val previousHash = ByteString("048fa2c8e304370be49428272fb02509c64806b30b000a4897a67c6fe5e80abb").toArray
       val block = Block(previousHash, Nil, timestamp = millis)
       Json.toJson(block).validate[Block] match {

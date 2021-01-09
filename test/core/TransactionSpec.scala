@@ -138,7 +138,7 @@ class TransactionSpec extends TestSpec {
   }
 
   "Transaction#reads" must {
-    "returns reads a fully instance from json" in new TestSetup {
+    "returns reads a fully instance copyWith json" in new TestSetup {
       val json: String =
         s"""
           |{

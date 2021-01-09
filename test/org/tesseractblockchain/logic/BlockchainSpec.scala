@@ -4,12 +4,9 @@ import java.math.BigInteger
 import java.time.Instant
 
 import akka.util.ByteString
-import cats.implicits._
 import core._
 import core.exceptions.TransactionNotFoundException
 import core.fixtures.CoreFixtures
-import core.util.catz.ZioComonad._
-import core.util.converters.SHA3Helper
 import tests.TestSpec
 import zio.{Ref, UIO, ZIO}
 
@@ -125,28 +122,10 @@ class BlockchainSpec extends TestSpec {
         block0        <- blockchainUioRef.getInstance(_.getBlockByHash(CoreFixtures.hashStr1)).flatten
       } yield block0)(_ mustBe Right(block))
     }
-    "return a block by hash bytes array via getInstance which applied a function: f: Blockchain => T" in {
-      val hashDigits: Array[Byte] =
-        Array(-24, 105, -111, -15, -120, 86, -17, 25, -124, -68, -94, 100, 92, 15, 123, 63, -112, -111, -76, 24, 87, 107,
-          43, -61, -108, -36, 53, -2, 86, 123, -2, -57)
-      val hash = SHA3Helper.digestToHex(hashDigits).extract
-      val block = Block.apply(previousHash1, millis)
-      val blockchainUioRef: UIO[Ref[Blockchain]] = Ref.make(Blockchain(
-        blockCache       = BlockCache((hash,  block) :: Nil),
-        transactionCache = TransactionCache((CoreFixtures.hashStr2, transaction) :: Nil)
-      ))
-      whenReady(for {
-        blockchainRef <- blockchainUioRef
-        bc            <- blockchainRef.map(_.addBlock(block)).get.flatten
-        _             <- blockchainRef.set(bc)
-        // test
-        block0        <- blockchainUioRef.getInstance(_.getBlockByHash(hashDigits)).flatten
-      } yield block0)(_ mustBe Right(block))
-    }
   }
 
   "Blockchain#getPreviousHash" must {
-    "return the prev hash from latest block from blockHeader of the prev block" in {
+    "return the prev hash copyWith latest block copyWith blockHeader of the prev block" in {
       whenReady(for {
         blockchainRef <- Ref.make(Blockchain(
                            blockCache       = BlockCache(Nil),
@@ -160,25 +139,6 @@ class BlockchainSpec extends TestSpec {
         case Right(arr) => arr mustBe a[Array[_]]
         case _ => fail("getPreviousHash")
       }
-    }
-  }
-
-  "Blockchain#size" must {
-    "return the size of current Blockchain: 3" in {
-      whenReady(for {
-        blockchainRef <- Ref.make(Blockchain(
-                           blockCache       = BlockCache(Nil),
-                           transactionCache = TransactionCache(Nil)
-                         ))
-        blockchain0   <- blockchainRef.map(_.addBlock(Block.apply(previousHash1, millis))).get.flatten
-        blockchain    <- blockchain0.addBlock(Block.apply(previousHash2, millis))
-      } yield blockchain) {
-        case Right(bc) => bc.size mustBe 3
-        case _ => fail("size")
-      }
-    }
-    "return the minimal Blockchain size of 1" in {
-      Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)).size mustBe 1
     }
   }
 
@@ -212,7 +172,7 @@ class BlockchainSpec extends TestSpec {
         blockchain    <- blockchain1.addBlock(block3)
       } yield blockchain) {
         // test
-        case Right(blockchain) => blockchain.getLatestBlock mustBe block3
+        case Right(blockchain) => blockchain.chain.getLastBlock mustBe block3
         case Left(_) => fail("getLatestBlock")
       }
     }
@@ -236,7 +196,7 @@ class BlockchainSpec extends TestSpec {
       // only the genesis block inside the blockCache
       whenReady(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.getLatestBlock.previousHash)) {
+          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
@@ -251,7 +211,7 @@ class BlockchainSpec extends TestSpec {
         blockchain1   <- blockchain0.addBlock(block2)
         blockchain    <- blockchain1.addBlock(block3)
 
-        _              = blockchain.getLatestBlock mustBe block3  // self check
+        _              = blockchain.chain.getLastBlock mustBe block3  // self check
         cache          = blockchain.blockCache.value.map(_._2)
         _              = cache.contains(block3) mustBe true       // self check
         _              = cache.contains(block2) mustBe true       // self check
@@ -285,7 +245,7 @@ class BlockchainSpec extends TestSpec {
       // only the genesis block inside the blockCache
       whenReady(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.getLatestBlock.previousHash)) {
+          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
@@ -302,7 +262,7 @@ class BlockchainSpec extends TestSpec {
         blockchain3   <- blockchain2.addBlock(block4)
         blockchain    <- blockchain3.addBlock(block5)
 
-        _              = blockchain.getLatestBlock mustBe block5  // self check
+        _              = blockchain.chain.getLastBlock mustBe block5  // self check
         cache          = blockchain.blockCache.value.map(_._2)
         _              = cache.contains(block5) mustBe true       // self check
         _              = cache.contains(block4) mustBe true       // self check
@@ -340,7 +300,7 @@ class BlockchainSpec extends TestSpec {
       // only the genesis block inside the blockCache
       whenReady(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.getLatestBlock.previousHash)) {
+          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
@@ -357,7 +317,7 @@ class BlockchainSpec extends TestSpec {
         blockchain3   <- blockchain2.addBlock(block4)
         blockchain    <- blockchain3.addBlock(block5)
 
-        _              = blockchain.getLatestBlock mustBe block5  // self check
+        _              = blockchain.chain.getLastBlock mustBe block5  // self check
         cache          = blockchain.blockCache.value.map(_._2)
         _              = cache.contains(block5) mustBe true       // self check
         _              = cache.contains(block4) mustBe true       // self check
@@ -395,7 +355,7 @@ class BlockchainSpec extends TestSpec {
       // only the genesis block inside the blockCache
       whenReady(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.getLatestBlock.previousHash)) {
+          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
@@ -412,7 +372,7 @@ class BlockchainSpec extends TestSpec {
         blockchain3   <- blockchain2.addBlock(block4)
         blockchain    <- blockchain3.addBlock(block5)
 
-        _              = blockchain.getLatestBlock mustBe block5  // self check
+        _              = blockchain.chain.getLastBlock mustBe block5  // self check
         cache          = blockchain.blockCache.value.map(_._2)
         _              = cache.contains(block5) mustBe true       // self check
         _              = cache.contains(block4) mustBe true       // self check
@@ -450,7 +410,7 @@ class BlockchainSpec extends TestSpec {
       // only the genesis block inside the blockCache
       whenReady(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.getLatestBlock.previousHash)) {
+          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
@@ -467,7 +427,7 @@ class BlockchainSpec extends TestSpec {
         blockchain3   <- blockchain2.addBlock(block4)
         blockchain    <- blockchain3.addBlock(block5)
 
-        _              = blockchain.getLatestBlock mustBe block5  // self check
+        _              = blockchain.chain.getLastBlock mustBe block5  // self check
         cache          = blockchain.blockCache.value.map(_._2)
         _              = cache.contains(block5) mustBe true       // self check
         _              = cache.contains(block4) mustBe true       // self check

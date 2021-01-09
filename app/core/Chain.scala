@@ -22,6 +22,8 @@ object Chain {
     def getLastBlock: Block = chain.blocks.headOption.getOrElse(genesis)
 
     def size: Int = chain.blocks.length
+
+    def copyWith(block: Block): Chain = chain.copy(blocks = block :: chain.blocks)
   }
 
 }

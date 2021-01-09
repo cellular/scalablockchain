@@ -15,6 +15,8 @@ object BlockCache {
         case Some((_, block)) => Task.succeed(block)
         case None => Task.fail(BlockNotFoundException(hex))
       }
+
+    def copyWith(hex: String, block: Block): BlockCache = blockCache.copy((hex, block) :: blockCache.value)
   }
 
 }

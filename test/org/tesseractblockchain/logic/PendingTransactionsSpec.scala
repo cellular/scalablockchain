@@ -61,7 +61,7 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
   }
 
   "PendingTransactions#getTransactionsForNextBlock" must {
-    "return all elements from queue for the next block" in {
+    "return all elements copyWith queue for the next block" in {
       val queue: USTM[TPriorityQueue[Transaction]] = TPriorityQueue.empty[Transaction]
       val pt = PendingTransactions.apply(queue)
       val program: Task[List[Transaction]] = STM.atomically(for {
@@ -73,7 +73,7 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
 
       whenReady(program)(_ mustBe Right(transaction1 :: transaction2 :: Nil))
     }
-    "return all elements from queue (max 8)" in {
+    "return all elements copyWith queue (max 8)" in {
       val queue: USTM[TPriorityQueue[Transaction]] = TPriorityQueue.empty[Transaction]
       val pt = PendingTransactions.apply(queue)
       // [[SizeHelper.calculateTransactionCapacity]] mustBe 8, txs with 10 elements
