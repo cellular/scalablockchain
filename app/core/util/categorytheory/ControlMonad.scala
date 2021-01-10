@@ -1,4 +1,4 @@
-package core.util.catz
+package core.util.categorytheory
 
 import cats.Monad
 

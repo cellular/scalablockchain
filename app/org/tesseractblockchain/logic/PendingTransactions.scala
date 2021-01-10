@@ -3,7 +3,7 @@ package org.tesseractblockchain.logic
 import cats.effect._
 import cats.implicits._
 import core.util.SizeHelper
-import core.util.catz.ZioComonad._
+import core.util.categorytheory.ZioComonad._
 import core.{Block, Transaction}
 import zio.interop.catz._
 import zio.stm.{TPriorityQueue, USTM, ZSTM}

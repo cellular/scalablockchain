@@ -2,12 +2,12 @@ package org.tesseractblockchain.logic
 
 import java.math.BigInteger
 
-import core.util.catz.ControlMonad
-import cats.Applicative
 import cats.effect._
 import cats.implicits._
+import cats.{Applicative, Id, Monad}
 import core._
 import core.exceptions._
+import core.util.categorytheory.ControlMonad
 import core.util.converters.SHA3Helper
 import zio._
 import zio.interop.catz.{taskConcurrentInstance, _}
@@ -66,10 +66,8 @@ private[tesseractblockchain] object Blockchain {
             .either
             .map(_.toOption)
             .flatMap(_.traverse(block =>
-              ZIO.ifM(Task.succeed(sizePlusOffset >= offset.value))(
-                Task.succeed(block :: blocks),
-                Task.succeed(blocks)
-              )))
+              Monad[Id].ifM(sizePlusOffset >= offset.value)(block :: blocks, blocks).pure[Task]
+            ))
         )
 
       Task(blockchain.chain.getLastBlock).flatMap { block =>

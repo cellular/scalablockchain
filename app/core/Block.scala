@@ -5,7 +5,7 @@ import cats.effect._
 import cats.implicits._
 import core.MagicNumber.MagicNumber
 import core.util.SizeHelper
-import core.util.catz.ZioComonad._
+import core.util.categorytheory.ZioComonad._
 import core.util.converters.SHA3Helper
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Reads, Writes, __}

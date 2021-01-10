@@ -4,7 +4,7 @@ import java.io.File
 
 import cats.implicits._
 import core.persistence.errors.{FileReadingBlockThrowable, ChainNotFoundThrowable}
-import core.util.catz.ControlMonad
+import core.util.categorytheory.ControlMonad
 import core.{Block, Chain, NetworkId}
 import play.api.libs.json.Json
 import zio.interop.catz._

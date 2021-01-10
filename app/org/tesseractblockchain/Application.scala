@@ -13,19 +13,19 @@ import zio.{CancelableFuture, Fiber, Ref, ZIO}
 private[tesseractblockchain] class Application @Inject()(
     applicationLifecycle: ApplicationLifecycle)(
     clock: Clock,
-    persistenceService: PersistenceService
+    persistenceService: PersistenceService,
+    dependencyManager: DependencyManager
 ) extends ZIORuntime[BlockchainEnvironment] with Logging {
 
-  override val environment: BlockchainEnvironment =
-    new BlockchainEnvironment with DependencyManager {
-      override val clockEnv: Clock = new Clock {
-        override def getZone: ZoneId = ZoneId.of("UTC")
-        override def withZone(zone: ZoneId): Clock = clock.withZone(zone)
-        override def instant(): Instant = Instant.now(clock)
-      }
-      override val persistenceEnv: PersistenceService = persistenceService
-      override val dependencyEnv: DependencyManager = this.dependencyEnv
+  override val environment: BlockchainEnvironment = new BlockchainEnvironment {
+    override val clockEnv: Clock = new Clock {
+      override def getZone: ZoneId = ZoneId.of("UTC")
+      override def withZone(zone: ZoneId): Clock = clock.withZone(zone)
+      override def instant(): Instant = Instant.now(clock)
     }
+    override val persistenceEnv: PersistenceService = persistenceService
+    override val dependencyEnv: DependencyManager = dependencyManager
+  }
 
   private def start(): CancelableFuture[Fiber.Runtime[Throwable, Ref[Miner]]] =
     liftZIO(ZIO.accessM[BlockchainEnvironment](_.dependencyEnv.runMining()))

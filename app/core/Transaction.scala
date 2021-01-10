@@ -1,7 +1,7 @@
 package core
 
 import cats.implicits._
-import core.util.catz.ZioComonad.comonadTask
+import core.util.categorytheory.ZioComonad.comonadTask
 import core.util.converters.SHA3Helper
 import java.nio.charset.StandardCharsets
 import java.util.Objects
