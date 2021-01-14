@@ -19,22 +19,29 @@ private[tesseractblockchain] class TransactionService @Inject()() {
         pendingTransactionsRef <- env.dependencyEnv.pendingTransactions
         pendingTransactions    <- pendingTransactionsRef.get
         _                      <- Applicative[Task].map2(
-                                 STM.atomically(pendingTransactions.addPendingTransaction(tx)),
-                                 env.dependencyEnv.miner0.>>=(_.update(_.map(_.copy(canceledBlock = true))))
-                               )((ptx, _) => pendingTransactionsRef.set(ptx))
+                                    STM.atomically(pendingTransactions.addPendingTransaction(tx)),
+                                    env.dependencyEnv.miner0.>>=(_.update(_.map(_.copy(canceledBlock = true))))
+                                  )((ptx, _) => pendingTransactionsRef.set(ptx))
       } yield ()
     }
 
   def getTransactionByHash(hex: String): ZIO[BlockchainEnvironment, Throwable, Transaction] =
-    ZIO
-      .accessM[BlockchainEnvironment](_.dependencyEnv.blockchain.getInstance(_.getTransactionByHash(hex)))
-      .flatten
-      .mapError(_ => TransactionNotFoundException(hex))
+    ZIO.accessM[BlockchainEnvironment] { env =>
+      for {
+        blockchainRef <- env.dependencyEnv.blockchain
+        transaction   <- blockchainRef.getInstance(_.getTransactionByHash(hex))
+      } yield transaction
+    }.mapError[Throwable](_ => TransactionNotFoundException(hex))
 
-  def getRecentTransactions(size: BlockSize, offset: Offset): ZIO[BlockchainEnvironment, Throwable, List[Transaction]] =
-    ZIO
-      .accessM[BlockchainEnvironment](
-        _.dependencyEnv.blockchain.getInstance(_.getLatestBlocks(size, offset).map(_.>>=(_.transactions))))
-      .flatten
+  def getRecentTransactions(
+    size: BlockSize,
+    offset: Offset
+  ): ZIO[BlockchainEnvironment, Throwable, List[Transaction]] =
+    ZIO.accessM[BlockchainEnvironment] { env =>
+      for {
+        blockchainRef <- env.dependencyEnv.blockchain
+        transactions  <- blockchainRef.getInstance(_.getLatestBlocks(size, offset).map(_.>>=(_.transactions)))
+      } yield transactions
+    }
 
 }

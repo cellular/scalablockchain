@@ -24,8 +24,8 @@ private[tesseractblockchain] final case class Blockchain(
 
 private[tesseractblockchain] object Blockchain {
 
-  implicit class RichBlockchainUIORef(blockchainUIORef: UIO[Ref[Blockchain]]) {
-    def getInstance[T](f: Blockchain => T): ZIO[Any, Nothing, T] = blockchainUIORef.>>=(_.get.map(f))
+  implicit class RichBlockchainUIORef(blockchainUIORef: Ref[Blockchain]) {
+    def getInstance[T](f: Blockchain => Task[T]): ZIO[Any, Nothing, T] = blockchainUIORef.get.map(f)
   }
 
   implicit class RichBlockchain(blockchain: Blockchain) {

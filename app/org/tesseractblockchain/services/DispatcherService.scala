@@ -13,10 +13,12 @@ private[tesseractblockchain] class DispatcherService @Inject()() {
 
   def searchForHash(hex: String): ZIO[BlockchainEnvironment, Throwable, SearchForHashResponse] =
     ZIO.accessM[BlockchainEnvironment] { env =>
-      Applicative[Task].map2(
-        env.dependencyEnv.blockchain.getInstance(_.getBlockByHash(hex)).flatten,
-        env.dependencyEnv.blockchain.getInstance(_.getTransactionByHash(hex)).flatten
-      )((block, transaction) => SearchForHashResponse(block, transaction))
+      env.dependencyEnv.blockchain.flatMap { blockchainRef =>
+        Applicative[Task].map2(
+          blockchainRef.getInstance(_.getBlockByHash(hex)),
+          blockchainRef.getInstance(_.getTransactionByHash(hex))
+        )((block, transaction) => SearchForHashResponse(block, transaction))
+      }
     }.mapError(_ => SearchingHashNotFoundError(hex))
 
 }

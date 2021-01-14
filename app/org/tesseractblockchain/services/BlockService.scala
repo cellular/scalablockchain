@@ -9,18 +9,27 @@ import zio.interop.catz.monadErrorInstance
 private[tesseractblockchain] class BlockService @Inject()() {
 
   def getBlockByHash(hex: String): ZIO[BlockchainEnvironment, Throwable, Block] =
-    ZIO.accessM[BlockchainEnvironment](_.dependencyEnv.blockchain.getInstance(_.getBlockByHash(hex))).flatten
+    ZIO.accessM[BlockchainEnvironment] { env =>
+      for {
+        blockchainRef <- env.dependencyEnv.blockchain
+        block         <- blockchainRef.getInstance(_.getBlockByHash(hex))
+      } yield block
+    }
 
   def getRecentBlocks(size: BlockSize, offset: Option[Offset]): ZIO[BlockchainEnvironment, Throwable, List[Block]] =
-    ZIO.accessM[BlockchainEnvironment](
-      _.dependencyEnv.blockchain.getInstance(_.getLatestBlocks(size, offset.getOrElse(Offset.default)))
-    ).flatten
+    ZIO.accessM[BlockchainEnvironment] { env =>
+      for {
+        blockchainRef <- env.dependencyEnv.blockchain
+        blocks        <- blockchainRef.getInstance(_.getLatestBlocks(size, offset.getOrElse(Offset.default)))
+      } yield blocks
+    }
 
   def getChildBlockOfHash(hex: String): ZIO[BlockchainEnvironment, Throwable, Block] =
-    ZIO.accessM[BlockchainEnvironment] { dm =>
+    ZIO.accessM[BlockchainEnvironment] { env =>
       for {
-        block <- dm.dependencyEnv.blockchain.getInstance(_.getBlockByHash(hex)).flatten
-        child <- dm.dependencyEnv.blockchain.getInstance(_.getChildOfBlock(block)).flatten
+        blockchainRef <- env.dependencyEnv.blockchain
+        block         <- blockchainRef.getInstance(_.getBlockByHash(hex))
+        child         <- blockchainRef.getInstance(_.getChildOfBlock(block))
       } yield child
     }
 
