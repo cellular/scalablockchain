@@ -17,14 +17,14 @@ class TransactionController @Inject()(
   with JsonFailureResult {
 
   def getRecentTransactions(blockSize: BlockSize, offset: Offset): Action[AnyContent] = Action.async { _ =>
-    application.liftZIO(transactionService.getRecentTransactions(blockSize, offset).either.map {
+    application.runWithZIO(transactionService.getRecentTransactions(blockSize, offset).either.map {
       case Right(transactions) => transactions.toOkResult
       case Left(err) => err.toInternalServerErrorResult
     })
   }
 
   def getTransactionByHash(hex: String): Action[AnyContent] = Action.async { _ =>
-    application.liftZIO(transactionService.getTransactionByHash(hex).either.map {
+    application.runWithZIO(transactionService.getTransactionByHash(hex).either.map {
       case Right(transaction) => transaction.toOkResult
       case Left(err: TransactionNotFoundException) => err.toNotFoundResult
       case Left(err) => err.toInternalServerErrorResult
@@ -32,7 +32,7 @@ class TransactionController @Inject()(
   }
 
   def sendTransaction: Action[Transaction] = Action.async(parse.json[Transaction]) { request =>
-    application.liftZIO(transactionService.sendTransaction(request.body).either.map {
+    application.runWithZIO(transactionService.sendTransaction(request.body).either.map {
       case Right(_) => request.body.toCreatedResult
       case Left(err: TransactionNotFoundException) => err.toNotFoundResult
       case Left(err) => err.toInternalServerErrorResult

@@ -16,21 +16,21 @@ class BlockController @Inject()(
   with JsonFailureResult {
 
   def getBlockByHash(hex: String): Action[AnyContent] = Action.async { _ =>
-    application.liftZIO(blockService.getBlockByHash(hex).either.map {
+    application.runWithZIO(blockService.getBlockByHash(hex).either.map {
       case Right(block) => block.toOkResult
       case Left(err) => err.toInternalServerErrorResult
     })
   }
 
   def getRecentBlocks(blockSize: BlockSize, offset: Option[Offset]): Action[AnyContent] = Action.async { _ =>
-    application.liftZIO(blockService.getRecentBlocks(blockSize, offset).either map {
+    application.runWithZIO(blockService.getRecentBlocks(blockSize, offset).either map {
       case Right(blocks) => blocks.toOkResult
       case Left(err) => err.toInternalServerErrorResult
     })
   }
 
   def getChildBlockOfHash(hex: String): Action[AnyContent] = Action.async { _ =>
-    application.liftZIO(blockService.getChildBlockOfHash(hex).either.map {
+    application.runWithZIO(blockService.getChildBlockOfHash(hex).either.map {
       case Right(block) => block.toOkResult
       case Left(err) => err.toInternalServerErrorResult
     })

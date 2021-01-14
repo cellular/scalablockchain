@@ -29,7 +29,7 @@ class FileWriteChainServiceSpec extends TestSpec {
         _     <- service.writeChain(chain = chain, path = Paths.get(path).toString)
       } yield ()
 
-      whenReady(program)(_ mustBe Right(()))
+      testZIO(program)(_ mustBe Right(()))
     }
   }
 

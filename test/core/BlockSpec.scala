@@ -41,7 +41,7 @@ class BlockSpec extends TestSpec {
     "return an incremented Nonce" in {
       val previousHash = ByteString("048fa2c8e304370be49428272fb02509c64806b30b000a4897a67c6fe5e80abb").toArray
       val block = Block(previousHash, timestamp = millis)
-      whenReady(block.incrementNonce)(_ mustBe Right(Nonce(1)))
+      testZIO(block.incrementNonce)(_ mustBe Right(Nonce(1)))
     }
   }
 
@@ -57,7 +57,7 @@ class BlockSpec extends TestSpec {
         expected <- txsHashesTask.map(_.foldLeft(new Array[Byte](0))(_ ++ _)).flatMap(SHA3Helper.hash256)
       } yield hash -> expected
 
-      whenReady(program) {
+      testZIO(program) {
         case Right((hash, expected)) => hash mustEqual expected
         case Left(_) => fail("unexpected error: getTransactionHash")
       }
@@ -69,7 +69,7 @@ class BlockSpec extends TestSpec {
       val previousHash = ByteString("048fa2c8e304370be49428272fb02509c64806b30b000a4897a67c6fe5e80abb").toArray
       val block = Block(previousHash, timestamp = millis)
       val program = Applicative[Task].tuple2(block.getBlockHash, block.blockHeader.asHash)
-      whenReady(program) {
+      testZIO(program) {
         case Right((hash, expected)) => hash must not be expected
         case Left(_) => fail("unexpected error: getBlockHash")
       }

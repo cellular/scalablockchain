@@ -36,7 +36,7 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
         txs   <- queue.toList
       } yield txs)
 
-      whenReady(program)(_ mustBe Right(transaction2 :: transaction1 :: Nil))
+      testZIO(program)(_ mustBe Right(transaction2 :: transaction1 :: Nil))
     }
   }
 
@@ -50,13 +50,13 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
         predicate <- pt0.pendingTransactionsAvailable
       } yield predicate)
 
-      whenReady(program)(_ mustBe Right(true))
+      testZIO(program)(_ mustBe Right(true))
     }
     "return false when the queue is empty" in new TestSetup {
       val queue: USTM[TPriorityQueue[Transaction]] = TPriorityQueue.empty[Transaction]
       val pt = PendingTransactions.apply(queue)
 
-      whenReady(pt.pendingTransactionsAvailable.commit)(_ mustBe Right(false))
+      testZIO(pt.pendingTransactionsAvailable.commit)(_ mustBe Right(false))
     }
   }
 
@@ -71,7 +71,7 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
         txs <- pt.getTransactionsForNextBlock
       } yield txs)
 
-      whenReady(program)(_ mustBe Right(transaction1 :: transaction2 :: Nil))
+      testZIO(program)(_ mustBe Right(transaction1 :: transaction2 :: Nil))
     }
     "return all elements copyWith queue (max 8)" in {
       val queue: USTM[TPriorityQueue[Transaction]] = TPriorityQueue.empty[Transaction]
@@ -106,13 +106,13 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
         txs <- pt0.getTransactionsForNextBlock
       } yield txs)
 
-      whenReady(program)(_ mustBe Right(expected))
+      testZIO(program)(_ mustBe Right(expected))
     }
     "return nothing -- empty list of txs" in {
       val queue: USTM[TPriorityQueue[Transaction]] = TPriorityQueue.empty[Transaction]
       val pt = PendingTransactions.apply(queue)
 
-      whenReady(STM.atomically(pt.getTransactionsForNextBlock))(_ mustBe Right(Nil))
+      testZIO(STM.atomically(pt.getTransactionsForNextBlock))(_ mustBe Right(Nil))
     }
   }
 
@@ -137,7 +137,7 @@ class PendingTransactionsSpec extends TestSpec with CoreFixtures {
         queue  <- pt.value.flatMap(_.toList)
       } yield queue)
 
-      whenReady(program) {
+      testZIO(program) {
         case Right(l) =>
           val h1 = l.headOption
           val h2 = l.tail.headOption

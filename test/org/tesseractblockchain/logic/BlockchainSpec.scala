@@ -67,7 +67,7 @@ class BlockchainSpec extends TestSpec {
       )
     ).foreach { case (label, difficulty, expected) =>
       s"return $label ${difficulty.toString}" in {
-        whenReady(fnBlockchain(difficulty))(_ mustBe Right(expected))
+        testZIO(fnBlockchain(difficulty))(_ mustBe Right(expected))
       }
     }
   }
@@ -82,7 +82,7 @@ class BlockchainSpec extends TestSpec {
         transactionCache = TransactionCache(Nil)
       ))
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainUioRef
         // test
         blockchain0   <- blockchainRef.map(_.addBlock(block1)).get.flatten
@@ -114,7 +114,7 @@ class BlockchainSpec extends TestSpec {
         blockCache       = BlockCache((CoreFixtures.hashStr1,  block) :: Nil),
         transactionCache = TransactionCache((CoreFixtures.hashStr2, transaction) :: Nil)
       ))
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainUioRef
         bc            <- blockchainRef.map(_.addBlock(block)).get.flatten
         _             <- blockchainRef.set(bc)
@@ -126,7 +126,7 @@ class BlockchainSpec extends TestSpec {
 
   "Blockchain#getPreviousHash" must {
     "return the prev hash copyWith latest block copyWith blockHeader of the prev block" in {
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- Ref.make(Blockchain(
                            blockCache       = BlockCache(Nil),
                            transactionCache = TransactionCache(Nil)
@@ -147,12 +147,12 @@ class BlockchainSpec extends TestSpec {
       val transactionCache = TransactionCache((CoreFixtures.hashStr2, transaction) :: Nil)
       val blockchain = Blockchain(blockCache = BlockCache(Nil), transactionCache = transactionCache)
 
-      whenReady(blockchain.getTransactionByHash(CoreFixtures.hashStr2))(_ mustBe Right(transaction))
+      testZIO(blockchain.getTransactionByHash(CoreFixtures.hashStr2))(_ mustBe Right(transaction))
     }
     "return a TransactionNotFoundException" in {
       val blockchain = Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil))
 
-      whenReady(blockchain.getTransactionByHash(CoreFixtures.hashStr2))(
+      testZIO(blockchain.getTransactionByHash(CoreFixtures.hashStr2))(
         _ mustBe Left(TransactionNotFoundException(CoreFixtures.hashStr2))
       )
     }
@@ -162,7 +162,7 @@ class BlockchainSpec extends TestSpec {
     "return the latest block" in {
       val block3 = Block.apply(previousHash3, millis)
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- Ref.make(Blockchain(
                            blockCache       = BlockCache(Nil),
                            transactionCache = TransactionCache(Nil)
@@ -194,16 +194,16 @@ class BlockchainSpec extends TestSpec {
       val blockchainRef0 = Ref.make(Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)))
 
       // only the genesis block inside the blockCache
-      whenReady(blockchainRef0) {
+      testZIO(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
+          testZIO(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
         case Left(_) => fail("unexpected: check initial block")
       }
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainRef0
         blocks        <- blocks0
         (block1, block2, block3) = blocks
@@ -243,16 +243,16 @@ class BlockchainSpec extends TestSpec {
       val blockchainRef0 = Ref.make(Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)))
 
       // only the genesis block inside the blockCache
-      whenReady(blockchainRef0) {
+      testZIO(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
+          testZIO(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
         case Left(_) => fail("unexpected: check initial block")
       }
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainRef0
         blocks        <- blocks0
         (block1, block2, block3, block4, block5) = blocks
@@ -298,16 +298,16 @@ class BlockchainSpec extends TestSpec {
       val blockchainRef0 = Ref.make(Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)))
 
       // only the genesis block inside the blockCache
-      whenReady(blockchainRef0) {
+      testZIO(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
+          testZIO(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
         case Left(_) => fail("unexpected: check initial block")
       }
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainRef0
         blocks        <- blocks0
         (block1, block2, block3, block4, block5) = blocks
@@ -353,16 +353,16 @@ class BlockchainSpec extends TestSpec {
       val blockchainRef0 = Ref.make(Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)))
 
       // only the genesis block inside the blockCache
-      whenReady(blockchainRef0) {
+      testZIO(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
+          testZIO(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
         case Left(_) => fail("unexpected: check initial block")
       }
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainRef0
         blocks        <- blocks0
         (block1, block2, block3, block4, block5) = blocks
@@ -408,16 +408,16 @@ class BlockchainSpec extends TestSpec {
       val blockchainRef0 = Ref.make(Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)))
 
       // only the genesis block inside the blockCache
-      whenReady(blockchainRef0) {
+      testZIO(blockchainRef0) {
         case Right(ref) =>
-          whenReady(ref.get.map(_.chain.getLastBlock.previousHash)) {
+          testZIO(ref.get.map(_.chain.getLastBlock.previousHash)) {
             case Right(genesisHash) => genesisHash mustEqual previousHashGenesis
             case Left(_) => fail("first/last hash is not genesis")
           }
         case Left(_) => fail("unexpected: check initial block")
       }
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainRef0
         blocks        <- blocks0
         (block1, block2, block3, block4, block5) = blocks
@@ -451,7 +451,7 @@ class BlockchainSpec extends TestSpec {
       val defaultOffset = Offset(0)
       val blockchainRef0 = Ref.make(Blockchain(blockCache = BlockCache(Nil), transactionCache = TransactionCache(Nil)))
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- blockchainRef0
         blockchain    <- blockchainRef.get
 
@@ -473,7 +473,7 @@ class BlockchainSpec extends TestSpec {
         block3      = Block.apply(blockHash2, millis)
       } yield (block1, block2, block3)
 
-      whenReady(for {
+      testZIO(for {
         blockchainRef <- Ref.make(Blockchain(
           blockCache = BlockCache(Nil),
           transactionCache = TransactionCache(Nil)

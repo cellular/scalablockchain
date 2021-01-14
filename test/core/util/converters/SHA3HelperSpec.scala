@@ -18,7 +18,7 @@ class SHA3HelperSpec extends TestSpec {
 
   "SHA3Helper#hash256" must {
     "return a hash as hex string" in new TestSetup {
-      whenReady(SHA3Helper.hash256(hashDigits)) {
+      testZIO(SHA3Helper.hash256(hashDigits)) {
         case Right(arr) => arr mustEqual sha3hashDigits
         case Left(_) => fail("hash256")
       }
@@ -27,13 +27,13 @@ class SHA3HelperSpec extends TestSpec {
 
   "SHA3Helper#digestToHex" must {
     "return a hash as hex string" in new TestSetup {
-      whenReady(SHA3Helper.digestToHex(sha3hashDigits))(_ mustBe Right(sha3HashStr))
+      testZIO(SHA3Helper.digestToHex(sha3hashDigits))(_ mustBe Right(sha3HashStr))
     }
   }
 
   "SHA3Helper#hexToDigest" must {
     "return a hash as hex string" in new TestSetup {
-      whenReady(SHA3Helper.hexToDigest(sha3HashStr)) {
+      testZIO(SHA3Helper.hexToDigest(sha3HashStr)) {
         case Right(arr) => arr mustEqual sha3hashDigits
         case Left(_) => fail("hexToDigest")
       }
@@ -42,13 +42,13 @@ class SHA3HelperSpec extends TestSpec {
 
   "SHA3Helper#hash256AsHex" must {
     "return a hash as hex string" in new TestSetup {
-      whenReady(SHA3Helper.hash256AsHex(sha3hashDigits))(_ mustBe Right(hashHexStr))
+      testZIO(SHA3Helper.hash256AsHex(sha3hashDigits))(_ mustBe Right(hashHexStr))
     }
   }
 
   "SHA3Helper#hash256From" must {
     "return hash as digits of a bytes array" in new TestSetup {
-      whenReady(SHA3Helper.hash256From(sha3hashDigits)) {
+      testZIO(SHA3Helper.hash256From(sha3hashDigits)) {
         case Right(bytes) => Hex.toHexString(bytes) mustBe hashHexStr
         case Left(_) => fail("hash256From")
       }

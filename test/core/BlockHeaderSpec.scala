@@ -21,7 +21,7 @@ class BlockHeaderSpec extends TestSpec {
         hash1 <- hash
       } yield hash0 -> hash1
 
-      whenReady(program) {
+      testZIO(program) {
         case Right((h1, h2)) => h1 mustEqual h2
         case Left(_) => fail("unexpected error: asHash")
       }
@@ -31,7 +31,7 @@ class BlockHeaderSpec extends TestSpec {
   "BlockHeader#incrementNonce" must {
     "return a incremented Nonce" in {
       val blockHeader = BlockHeader(Instant.now.toEpochMilli, sha3hashDigits, sha3hashDigits)
-      whenReady(blockHeader.incrementNonce)(_ mustBe Right(Nonce(1)))
+      testZIO(blockHeader.incrementNonce)(_ mustBe Right(Nonce(1)))
     }
   }
 

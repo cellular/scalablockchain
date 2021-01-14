@@ -16,7 +16,7 @@ class FileReadChainServiceSpec extends TestSpec {
         path      = Paths.get(path).toString
       )
 
-      whenReady(program) {
+      testZIO(program) {
         case Right(chain) => chain mustBe a[Chain]
         case Left(_)      => fail("unexpected error: readChain")
       }

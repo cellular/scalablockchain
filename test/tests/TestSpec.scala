@@ -41,7 +41,7 @@ class TestSpec extends PlaySpec
     }
   }
 
-  def whenReady[T, U](task: => Task[T])(f: Either[Throwable, T] => U): U =
-    whenReady(defaultRuntime.unsafeRunToFuture(task.either))(f)
+  def testZIO[T, U](task: Task[T])(f: Either[Throwable, T] => U): U =
+    defaultRuntime.unsafeRun(task.either.map(f))
 
 }

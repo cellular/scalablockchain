@@ -26,9 +26,9 @@ class TransactionSpec extends TestSpec {
         transactionFeeLimit = transactionFeeLimit
       )
       val txHash = tx.txId
-      whenReady(tx.txId) {
+      testZIO(tx.txId) {
         case Right(hash0) =>
-          whenReady(txHash) {
+          testZIO(txHash) {
             case Right(hash1) => hash0 mustEqual hash1
             case _ => fail()
           }
@@ -53,7 +53,7 @@ class TransactionSpec extends TestSpec {
         hash2 <- tx.txIdAsHex
       } yield hash1 == hash2
 
-      whenReady(program)(_ mustBe Right(true))
+      testZIO(program)(_ mustBe Right(true))
     }
   }
 
@@ -67,7 +67,7 @@ class TransactionSpec extends TestSpec {
         transactionFeeBasePrice = transactionFeeBasePrice,
         transactionFeeLimit = transactionFeeLimit
       )
-      whenReady(tx.hashCodeTask)(_.isRight mustBe true)
+      testZIO(tx.hashCodeTask)(_.isRight mustBe true)
     }
   }
 
@@ -81,7 +81,7 @@ class TransactionSpec extends TestSpec {
         transactionFeeBasePrice = transactionFeeBasePrice,
         transactionFeeLimit = transactionFeeLimit
       )
-      whenReady(tx1.equals(None))(_ mustBe Right(false))
+      testZIO(tx1.equals(None))(_ mustBe Right(false))
     }
     "returns a true when the transactions are equal" in new TestSetup {
       val tx1 = Transaction.apply(
@@ -93,7 +93,7 @@ class TransactionSpec extends TestSpec {
         transactionFeeLimit = transactionFeeLimit
       )
       val tx2 = tx1
-      whenReady(tx1.equals(Some(tx2)))(_ mustBe Right(true))
+      testZIO(tx1.equals(Some(tx2)))(_ mustBe Right(true))
     }
     "returns a false when the transactions are not equal - two difference addresses" in new TestSetup {
       val tx1 = Transaction.apply(
@@ -112,7 +112,7 @@ class TransactionSpec extends TestSpec {
         transactionFeeBasePrice = transactionFeeBasePrice,
         transactionFeeLimit = transactionFeeLimit
       )
-      whenReady(tx1.equals(Some(tx2)))(_ mustBe Right(false))
+      testZIO(tx1.equals(Some(tx2)))(_ mustBe Right(false))
     }
   }
 

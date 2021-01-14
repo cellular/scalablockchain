@@ -28,7 +28,7 @@ private[tesseractblockchain] class Application @Inject()(
   }
 
   private def start(): CancelableFuture[Fiber.Runtime[Throwable, Ref[Miner]]] =
-    liftZIO(ZIO.accessM[BlockchainEnvironment](_.dependencyEnv.runMining()))
+    runWithZIO(ZIO.accessM[BlockchainEnvironment](_.dependencyEnv.runMining()))
 
   logger.info(
     s"""

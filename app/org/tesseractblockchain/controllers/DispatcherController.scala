@@ -15,7 +15,7 @@ class DispatcherController @Inject()(
   with JsonFailureResult {
 
   def searchForHash(hex: String): Action[AnyContent] = Action.async { _ =>
-    application.liftZIO(dispatcherService.searchForHash(hex).either.map {
+    application.runWithZIO(dispatcherService.searchForHash(hex).either.map {
       case Right(response) => response.toOkResult
       case Left(err) => err.toNotFoundResult
     })

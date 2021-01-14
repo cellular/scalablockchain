@@ -37,7 +37,7 @@ class PersistenceServiceSpec extends TestSpec {
         expected <- service.readChain(NetworkId(1))
       } yield (chain, expected)
 
-      whenReady(program) {
+      testZIO(program) {
         case Right((chain, expected)) =>
           chain.networkId mustBe expected.networkId
           chain.blocks.length mustBe expected.blocks.length
@@ -50,7 +50,7 @@ class PersistenceServiceSpec extends TestSpec {
     "returns a Unit on success" in {
       val chain = Chain(NetworkId(1), Nil)
       fileWriteChainService.writeChain(chain, baseRoot) returns Task.unit
-      whenReady(service.writeChain(chain))(_ mustBe Right(()))
+      testZIO(service.writeChain(chain))(_ mustBe Right(()))
     }
   }
 

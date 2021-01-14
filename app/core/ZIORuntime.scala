@@ -8,7 +8,7 @@ trait ZIORuntime[F] {
 
   private lazy val runtime: Runtime[F] = Runtime(environment, Platform.default)
 
-  def liftZIO[FF >: F, E <: Throwable, A](effect: ZIO[FF, E, A]): CancelableFuture[A] =
+  def runWithZIO[FF >: F, E <: Throwable, A](effect: ZIO[FF, E, A]): CancelableFuture[A] =
     runtime.unsafeRunToFuture[E, A](effect)
 
 }
