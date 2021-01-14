@@ -19,13 +19,14 @@ private[tesseractblockchain] final case class Blockchain(
     transactionCache: TransactionCache,
     chain: Chain = Chain(NetworkId(1)),
 ) {
+  // TODO must be a blockheader property
   val difficulty = new BigInteger("-57896000000000000000000000000000000000000000000000000000000000000000000000000")
 }
 
 private[tesseractblockchain] object Blockchain {
 
-  implicit class RichBlockchainUIORef(blockchainUIORef: Ref[Blockchain]) {
-    def getInstance[T](f: Blockchain => Task[T]): ZIO[Any, Nothing, T] = blockchainUIORef.get.map(f)
+  implicit class RichBlockchainRef(blockchainUIORef: Ref[Blockchain]) {
+    def getInstance[T](f: Blockchain => Task[T]): ZIO[Any, Nothing, T] = blockchainUIORef.get.flatMap(f)
   }
 
   implicit class RichBlockchain(blockchain: Blockchain) {

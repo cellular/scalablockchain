@@ -17,4 +17,5 @@ class Module extends AbstractModule {
     bind(classOf[TransactionService]).asEagerSingleton()
     bind(classOf[PendingTransactions]).asEagerSingleton()
   }
+
 }

@@ -5,13 +5,12 @@ import cats.effect._
 import cats.implicits._
 import core.exceptions.TransactionNotFoundException
 import core.{BlockSize, Offset, Transaction}
-import javax.inject.Inject
 import org.tesseractblockchain.BlockchainEnvironment
 import zio._
 import zio.interop.catz.taskConcurrentInstance
 import zio.stm.STM
 
-private[tesseractblockchain] class TransactionService @Inject()() {
+private[tesseractblockchain] class TransactionService {
 
   def sendTransaction(tx: Transaction): ZIO[BlockchainEnvironment, Throwable, Unit] =
     ZIO.accessM[BlockchainEnvironment] { env =>

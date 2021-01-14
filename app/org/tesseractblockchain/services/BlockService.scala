@@ -1,12 +1,11 @@
 package org.tesseractblockchain.services
 
 import core.{Block, BlockSize, Offset}
-import javax.inject.Inject
 import org.tesseractblockchain.BlockchainEnvironment
 import zio.ZIO
 import zio.interop.catz.monadErrorInstance
 
-private[tesseractblockchain] class BlockService @Inject()() {
+private[tesseractblockchain] class BlockService {
 
   def getBlockByHash(hex: String): ZIO[BlockchainEnvironment, Throwable, Block] =
     ZIO.accessM[BlockchainEnvironment] { env =>

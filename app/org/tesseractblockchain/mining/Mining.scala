@@ -32,7 +32,7 @@ private[tesseractblockchain] object Mining {
                                     )
           maybeCanceledBlock     <- ZIO.ifM(canceledBlockPredicate)(Task.succeed(true), Task.succeed(false))
           _                      <- updatedMinerRef.update(_.copy(maybeMinedBlock, miner.isMining, maybeCanceledBlock))
-          //
+          // TODO persist chain
           _                      <- ZIO.when(miner.isMining)(createNewBlock(updatedMinerRef).flatMap(mining))
         } yield updatedMinerRef
       }
