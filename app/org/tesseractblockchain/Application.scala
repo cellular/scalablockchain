@@ -2,16 +2,16 @@ package org.tesseractblockchain
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 
+import cats.implicits._
 import core.interops.persistence.services.PersistenceService
 import core.{Miner, ZIORuntime}
 import javax.inject.{Inject, Singleton}
 import play.api.Logging
-import play.api.inject.ApplicationLifecycle
-import zio.{CancelableFuture, Fiber, Ref, ZIO}
+import zio._
+import zio.interop.catz._
 
 @Singleton
 private[tesseractblockchain] class Application @Inject()(
-    applicationLifecycle: ApplicationLifecycle)(
     clock: Clock,
     persistenceService: PersistenceService,
     dependencyManager: DependencyManager
@@ -27,23 +27,22 @@ private[tesseractblockchain] class Application @Inject()(
     override val dependencyEnv: DependencyManager = dependencyManager
   }
 
-  private def start(): CancelableFuture[Fiber.Runtime[Throwable, Ref[Miner]]] =
-    runWithZIO(ZIO.accessM[BlockchainEnvironment](_.dependencyEnv.runMining()))
+  def program: ZIO[BlockchainEnvironment, Throwable, Fiber.Runtime[Throwable, Ref[Miner]]] =
+    Task {
+      logger.info(
+        s"""
+           |Application started...
+           |Zulu time: ${clock.instant().atOffset(ZoneOffset.UTC)}
+           |""".stripMargin)
+    } *> ZIO.accessM[BlockchainEnvironment](_.dependencyEnv.runMining())
 
-  logger.info(
-    s"""
-       |Application started...
-       |Zulu time: ${clock.instant().atOffset(ZoneOffset.UTC)}
-       |""".stripMargin)
-
-  applicationLifecycle.addStopHook { () =>
-    logger.error(
-      s"""
-         |Application abruptly ends!
-         |Zulu time: ${clock.instant().atOffset(ZoneOffset.UTC)}
-         |""".stripMargin)
-    start()
+  def run(): Unit = runWithZIOAsync(program) {
+    case Exit.Success(fiber) => fiber.join.bimap(t => onErrorFailureLog(t) *> program, _ => program)
+    case Exit.Failure(cause) => onErrorFailureLog(cause.failures: _*) *> program
   }
 
-  start()
+  def onErrorFailureLog(throwable: Throwable*): Task[Unit] =
+    throwable.traverse(t => Task(logger.error(s"Application abruptly ends -- reason(s): ${t.getMessage}"))) *>
+    Task(logger.error(s"Zulu time: ${clock.instant().atOffset(ZoneOffset.UTC)}"))
+
 }
