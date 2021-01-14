@@ -7,6 +7,6 @@ Alle Codebeispiele basieren auf Listings aus dem Buch „Blockchain für Entwick
 
 Build with [ZIO](https://zio.dev) and Love.
 
-## v0.1
+## v0.1 (unreleased)
 
 This project is a pure playground with the attempt to build a purely functional blockchain solution with ZIO in Scala programming language.
