@@ -1,6 +1,9 @@
 package core.generators
 
-import core.{Nonce, Transaction}
+import java.time.Instant
+
+import akka.util.ByteString
+import core.{Block, Nonce, Transaction}
 import org.scalacheck.Gen
 import tests.BaseGenerators
 
@@ -28,5 +31,11 @@ trait CoreGenerators {
     transactionFeeBasePrice <- BaseGenerators.genFloatWithFractionalNotZero.map(BigDecimal(_))
     transactionFeeLimit     <- BaseGenerators.genFloatWithFractionalNotZero.map(BigDecimal(_))
   } yield Transaction(sender, receiver, amount, nonce, transactionFeeBasePrice, transactionFeeLimit)
+
+  val genBlock: Gen[Block] = for {
+    prevHash     <- genHex64Str.map(ByteString(_).toArray)
+    transactions <- Gen.listOf(genTransaction)
+    millis       <- Gen.const(Instant.now.toEpochMilli)
+  } yield Block.apply(prevHash, transactions, millis)
 
 }

@@ -30,20 +30,18 @@ class BlockServiceSpec extends TestSpec {
 
   "BlockService#getBlockByHash" must {
     "return a block by hash" in new TestSetup {
-      val block: Block = Block.apply(previousHashBytes, Instant.now.toEpochMilli)
-
       environment.dependencyEnv.blockchain returns Ref.make(Blockchain(
-        blockCache       = BlockCache((CoreFixtures.hashStr1,  block) :: Nil),
+        blockCache       = BlockCache((CoreFixtures.hashStr1,  CoreFixtures.block1) :: Nil),
         transactionCache = TransactionCache(Nil)
       ))
 
-      val preProgram: ZIO[Any, Throwable, Blockchain] = for {
+      val preProgram = for {
         blockchainRef <- environment.dependencyEnv.blockchain
-        blockchain0   <- blockchainRef.map(_.addBlock(block)).get.flatten
+        blockchain0   <- blockchainRef.map(_.addBlock(CoreFixtures.block1)).get.flatten
       } yield blockchain0
 
       testZIO(preProgram *> service.getBlockByHash(CoreFixtures.hashStr1).provide(environment))(
-        _ mustBe Right(block)
+        _ mustBe Right(CoreFixtures.block1)
       )
     }
   }

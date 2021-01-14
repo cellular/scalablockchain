@@ -109,18 +109,17 @@ class BlockchainSpec extends TestSpec {
 
   "Blockchain#flatMap getBlockByHash" must {
     "return a block by hashStr via flatMap which applied a function: f: Blockchain => T" in {
-      val block = Block.apply(previousHash1, millis)
       val blockchainUioRef: UIO[Ref[Blockchain]] = Ref.make(Blockchain(
-        blockCache       = BlockCache((CoreFixtures.hashStr1,  block) :: Nil),
+        blockCache       = BlockCache((CoreFixtures.hashStr1, CoreFixtures.block1) :: Nil),
         transactionCache = TransactionCache((CoreFixtures.hashStr2, transaction) :: Nil)
       ))
       testZIO(for {
         blockchainRef <- blockchainUioRef
-        bc            <- blockchainRef.map(_.addBlock(block)).get.flatten
+        bc            <- blockchainRef.map(_.addBlock(CoreFixtures.block1)).get.flatten
         _             <- blockchainRef.set(bc)
         // test
         block0        <- blockchainRef.>>=(_.getBlockByHash(CoreFixtures.hashStr1))
-      } yield block0)(_ mustBe Right(block))
+      } yield block0)(_ mustBe Right(CoreFixtures.block1))
     }
   }
 
