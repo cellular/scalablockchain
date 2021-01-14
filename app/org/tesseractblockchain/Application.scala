@@ -45,4 +45,5 @@ private[tesseractblockchain] class Application @Inject()(
     throwable.traverse(t => Task(logger.error(s"Application abruptly ends -- reason(s): ${t.getMessage}"))) *>
     Task(logger.error(s"Zulu time: ${clock.instant().atOffset(ZoneOffset.UTC)}"))
 
+  run()
 }
