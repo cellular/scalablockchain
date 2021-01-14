@@ -39,11 +39,12 @@ class BlockServiceSpec extends TestSpec {
 
       val preProgram: ZIO[Any, Throwable, Blockchain] = for {
         blockchainRef <- environment.dependencyEnv.blockchain
-        // test
         blockchain0   <- blockchainRef.map(_.addBlock(block)).get.flatten
       } yield blockchain0
 
-      testZIO(preProgram *> service.getBlockByHash(CoreFixtures.hashStr1).provide(environment))(_ mustBe Right(block))
+      testZIO(preProgram *> service.getBlockByHash(CoreFixtures.hashStr1).provide(environment))(
+        _ mustBe Right(block)
+      )
     }
   }
 
