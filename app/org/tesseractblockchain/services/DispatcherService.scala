@@ -14,8 +14,8 @@ private[tesseractblockchain] class DispatcherService {
     ZIO.accessM[BlockchainEnvironment] { env =>
       env.dependencyEnv.blockchain.flatMap { blockchainRef =>
         Applicative[Task].map2(
-          blockchainRef.getInstance(_.getBlockByHash(hex)),
-          blockchainRef.getInstance(_.getTransactionByHash(hex))
+          blockchainRef.>>=(_.getBlockByHash(hex)),
+          blockchainRef.>>=(_.getTransactionByHash(hex))
         )((block, transaction) => SearchForHashResponse(block, transaction))
       }
     }.mapError(_ => SearchingHashNotFoundError(hex))

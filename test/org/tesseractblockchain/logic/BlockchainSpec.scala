@@ -107,8 +107,8 @@ class BlockchainSpec extends TestSpec {
     }
   }
 
-  "Blockchain#getInstance getBlockByHash" must {
-    "return a block by hashStr via getInstance which applied a function: f: Blockchain => T" in {
+  "Blockchain#flatMap getBlockByHash" must {
+    "return a block by hashStr via flatMap which applied a function: f: Blockchain => T" in {
       val block = Block.apply(previousHash1, millis)
       val blockchainUioRef: UIO[Ref[Blockchain]] = Ref.make(Blockchain(
         blockCache       = BlockCache((CoreFixtures.hashStr1,  block) :: Nil),
@@ -119,7 +119,7 @@ class BlockchainSpec extends TestSpec {
         bc            <- blockchainRef.map(_.addBlock(block)).get.flatten
         _             <- blockchainRef.set(bc)
         // test
-        block0        <- blockchainUioRef.getInstance(_.getBlockByHash(CoreFixtures.hashStr1)).flatten
+        block0        <- blockchainRef.>>=(_.getBlockByHash(CoreFixtures.hashStr1))
       } yield block0)(_ mustBe Right(block))
     }
   }

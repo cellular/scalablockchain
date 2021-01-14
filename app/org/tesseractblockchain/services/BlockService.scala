@@ -11,7 +11,7 @@ private[tesseractblockchain] class BlockService {
     ZIO.accessM[BlockchainEnvironment] { env =>
       for {
         blockchainRef <- env.dependencyEnv.blockchain
-        block         <- blockchainRef.getInstance(_.getBlockByHash(hex))
+        block         <- blockchainRef.>>=(_.getBlockByHash(hex))
       } yield block
     }
 
@@ -19,7 +19,7 @@ private[tesseractblockchain] class BlockService {
     ZIO.accessM[BlockchainEnvironment] { env =>
       for {
         blockchainRef <- env.dependencyEnv.blockchain
-        blocks        <- blockchainRef.getInstance(_.getLatestBlocks(size, offset.getOrElse(Offset.default)))
+        blocks        <- blockchainRef.>>=(_.getLatestBlocks(size, offset.getOrElse(Offset.default)))
       } yield blocks
     }
 
@@ -27,8 +27,8 @@ private[tesseractblockchain] class BlockService {
     ZIO.accessM[BlockchainEnvironment] { env =>
       for {
         blockchainRef <- env.dependencyEnv.blockchain
-        block         <- blockchainRef.getInstance(_.getBlockByHash(hex))
-        child         <- blockchainRef.getInstance(_.getChildOfBlock(block))
+        block         <- blockchainRef.>>=(_.getBlockByHash(hex))
+        child         <- blockchainRef.>>=(_.getChildOfBlock(block))
       } yield child
     }
 

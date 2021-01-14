@@ -28,9 +28,9 @@ private[tesseractblockchain] class TransactionService {
     ZIO.accessM[BlockchainEnvironment] { env =>
       for {
         blockchainRef <- env.dependencyEnv.blockchain
-        transaction   <- blockchainRef.getInstance(_.getTransactionByHash(hex))
+        transaction   <- blockchainRef.>>=(_.getTransactionByHash(hex))
       } yield transaction
-    }.mapError[Throwable](_ => TransactionNotFoundException(hex))
+    }.mapError(_ => TransactionNotFoundException(hex))
 
   def getRecentTransactions(
     size: BlockSize,
@@ -39,7 +39,7 @@ private[tesseractblockchain] class TransactionService {
     ZIO.accessM[BlockchainEnvironment] { env =>
       for {
         blockchainRef <- env.dependencyEnv.blockchain
-        transactions  <- blockchainRef.getInstance(_.getLatestBlocks(size, offset).map(_.>>=(_.transactions)))
+        transactions  <- blockchainRef.>>=(_.getLatestBlocks(size, offset).map(_.>>=(_.transactions)))
       } yield transactions
     }
 
